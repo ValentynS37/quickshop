@@ -5,7 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Canada-Ukraine QuickShop</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+       <section>
+    <h2>Зробіть запит на товар</h2>
+    <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <label for="name">Ваше ім'я:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="email">Ваш email:</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="message">Ваш запит:</label>
+        <textarea id="message" name="message" rows="4" required></textarea>
+
+        <button type="submit">Надіслати</button>
+    </form>
+</section>
+ body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
         header { background-color: #4CAF50; color: white; padding: 15px; text-align: center; }
         .product { padding: 10px; margin: 10px; border: 1px solid #ddd; display: inline-block; width: 30%; }
         .product img { width: 100%; }
