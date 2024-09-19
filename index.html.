@@ -33,7 +33,13 @@
         <p>Ціна: 500 грн</p>
         <a href="https://epicentrk.ua" class="button">Замовити</a>
     </div>
-    
+    <div class="product">
+    <img src="https://via.placeholder.com/150" alt="Назва товару">
+    <h2>Назва товару</h2>
+    <p>Ціна: 1234 грн</p>
+    <a href="посилання_на_український_магазин" class="button">Замовити</a>
+</div>
+
     <!-- Додай більше товарів тут -->
 </section>
 
