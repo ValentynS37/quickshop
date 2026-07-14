@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-
 PAYLOAD = {
     "company": "Demo Logistics Ukraine",
     "contact": "operations@example.com",
