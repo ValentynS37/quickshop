@@ -56,15 +56,45 @@ def create_run(db: Session, payload: IntakeRequest, result: AgentResult) -> Work
     )
     db.add(run)
 
-    stages = [
-        ("Intake Agent", "Request normalized and validated."),
-        ("Qualification Agent", f"Lead score {result.lead_score}; risk {result.risk_level}."),
-        ("Proposal Agent", "Commercial pilot draft generated."),
-        ("Project Agent", f"{len(result.backlog)} backlog items generated."),
-        ("Evidence Agent", f"Evidence package {evidence_id} sealed for approval."),
+    default_stages: list[dict[str, object]] = [
+        {
+            "agent_name": "Intake Agent",
+            "decision_summary": "Request normalized and validated.",
+            "confidence": result.confidence,
+            "flags": [],
+        },
+        {
+            "agent_name": "Qualification Agent",
+            "decision_summary": f"Lead score {result.lead_score}; risk {result.risk_level}.",
+            "confidence": result.confidence,
+            "flags": [],
+        },
+        {
+            "agent_name": "Proposal Agent",
+            "decision_summary": "Commercial pilot draft generated.",
+            "confidence": result.confidence,
+            "flags": [],
+        },
+        {
+            "agent_name": "Project Agent",
+            "decision_summary": f"{len(result.backlog)} backlog items generated.",
+            "confidence": result.confidence,
+            "flags": [],
+        },
+        {
+            "agent_name": "Evidence Agent",
+            "decision_summary": f"Evidence package {evidence_id} sealed for approval.",
+            "confidence": result.confidence,
+            "flags": result.flags,
+        },
     ]
+    stages = result.stage_summaries or default_stages
     previous_hash = input_hash
-    for agent_name, decision_summary in stages:
+    for stage in stages:
+        agent_name = str(stage["agent_name"])
+        decision_summary = str(stage["decision_summary"])
+        stage_confidence = float(stage.get("confidence", result.confidence))
+        stage_flags = list(stage.get("flags", []))
         agent_output_hash = sha256_text(f"{agent_name}|{decision_summary}|{output_hash}")
         db.add(
             AgentRun(
@@ -72,10 +102,10 @@ def create_run(db: Session, payload: IntakeRequest, result: AgentResult) -> Work
                 workflow_run_id=run_id,
                 agent_name=agent_name,
                 decision_summary=decision_summary,
-                confidence=result.confidence,
+                confidence=stage_confidence,
                 input_hash=previous_hash,
                 output_hash=agent_output_hash,
-                flags=result.flags if agent_name == "Evidence Agent" else [],
+                flags=stage_flags,
             )
         )
         previous_hash = agent_output_hash
@@ -99,6 +129,7 @@ def create_run(db: Session, payload: IntakeRequest, result: AgentResult) -> Work
                 "input_hash": input_hash,
                 "output_hash": output_hash,
                 "approval_required": True,
+                "agent_count": len(stages),
             },
         )
     )

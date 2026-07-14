@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from .database import get_db
 from .models import Approval, AuditEvent, WorkflowRun
 from .schemas import (
+    AgentProfileRead,
     ApprovalDecision,
     DashboardSummary,
     EvidencePackage,
@@ -31,6 +32,36 @@ def run_query():
 
 def build_router(settings) -> APIRouter:
     bound = APIRouter(dependencies=[Depends(require_api_key)])
+
+    @bound.get("/agents", response_model=list[AgentProfileRead])
+    def list_agents() -> list[AgentProfileRead]:
+        openai_active = bool(settings.openai_api_key) and settings.agent_orchestration != "local"
+        execution = (
+            "openai-agents-sdk"
+            if openai_active and settings.agent_orchestration == "sdk"
+            else "openai-responses"
+            if openai_active
+            else "local-fallback"
+        )
+        roles = [
+            ("BADS Coordinator", "Runs the controlled specialist sequence."),
+            ("Intake Agent", "Structures the request and scores pilot fit."),
+            ("Research Agent", "Designs the bounded workflow and data requirements."),
+            ("Sales Agent", "Prepares a reviewable pilot proposal."),
+            ("Project Agent", "Creates backlog items and acceptance criteria."),
+            ("QA Agent", "Checks claims, risks, and approval boundaries."),
+            ("Evidence Agent", "Explains evidence requirements before deterministic sealing."),
+        ]
+        return [
+            AgentProfileRead(
+                name=name,
+                role=role,
+                execution=execution,
+                active=True,
+                external_actions_allowed=False,
+            )
+            for name, role in roles
+        ]
 
     @bound.post("/intake", response_model=WorkflowRunRead, status_code=status.HTTP_201_CREATED)
     def create_intake_bound(payload: IntakeRequest, db: Session = Depends(get_db)) -> WorkflowRun:

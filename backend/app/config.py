@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Literal
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +16,9 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_model: str = "gpt-5-mini"
     openai_base_url: str = "https://api.openai.com/v1"
+    agent_orchestration: Literal["sdk", "responses", "local"] = "sdk"
+    agent_max_turns: int = Field(default=6, ge=2, le=20)
+    agent_tracing_enabled: bool = False
     cors_origins: list[str] = ["http://localhost:8000", "http://localhost:5500"]
 
     model_config = SettingsConfigDict(

@@ -26,6 +26,18 @@ def test_api_requires_key(client: TestClient) -> None:
     assert response.status_code == 401
 
 
+def test_agent_registry_uses_local_fallback_without_openai_key(
+    client: TestClient,
+    headers: dict[str, str],
+) -> None:
+    response = client.get("/api/v1/agents", headers=headers)
+    assert response.status_code == 200
+    agents = response.json()
+    assert len(agents) == 7
+    assert {item["execution"] for item in agents} == {"local-fallback"}
+    assert not any(item["external_actions_allowed"] for item in agents)
+
+
 def test_full_intake_approval_and_evidence_flow(client: TestClient, headers: dict[str, str]) -> None:
     created = client.post("/api/v1/intake", json=PAYLOAD, headers=headers)
     assert created.status_code == 201, created.text

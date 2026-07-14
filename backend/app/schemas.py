@@ -14,6 +14,14 @@ class IntakeRequest(BaseModel):
     data_classification: Literal["public", "internal", "confidential", "restricted"] = "internal"
 
 
+class AgentProfileRead(BaseModel):
+    name: str
+    role: str
+    execution: str
+    active: bool
+    external_actions_allowed: bool = False
+
+
 class AgentRunRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
