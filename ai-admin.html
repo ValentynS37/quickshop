@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BADS AI Administrator — Pilot Demo</title>
+  <link rel="stylesheet" href="assets/css/bads.css">
+  <style>
+    body{background:#03050a;color:#f7fbff}.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}.side{border-right:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);padding:22px;position:sticky;top:0;height:100vh}.main{padding:24px}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:20px}.grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px}.panel,.stat{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.06);border-radius:24px;padding:18px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.stat b{font-size:28px;display:block}.field{display:grid;gap:7px;margin-bottom:13px}.field label{font-size:12px;color:#9db1c4}.field input,.field select,.field textarea{width:100%;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;border-radius:16px;padding:13px}.field textarea{min-height:110px;resize:vertical}.pipeline{display:grid;gap:10px}.step{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:13px;border:1px solid rgba(255,255,255,.1);border-radius:17px;background:rgba(255,255,255,.045)}.step .num{width:38px;height:38px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.08)}.step small{display:block;color:#9db1c4}.step[data-state="running"]{border-color:#21d4ff}.step[data-state="done"]{border-color:#19f0b4}.step[data-state="waiting"]{border-color:#ffd35c}.status{font-size:12px;padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.08)}.output{white-space:pre-wrap;line-height:1.55;min-height:190px}.evidence{display:grid;gap:9px}.evidence-row{padding:11px;border-left:3px solid #19f0b4;background:rgba(255,255,255,.045);border-radius:11px}.evidence-row small{display:block;color:#9db1c4;margin-top:3px}.actions{display:flex;flex-wrap:wrap;gap:10px}.notice{padding:12px 14px;border:1px solid rgba(255,211,92,.35);background:rgba(255,211,92,.08);border-radius:15px;color:#ffe7a0}.hidden{display:none!important}@media(max-width:950px){.app{grid-template-columns:1fr}.side{position:relative;height:auto}.grid,.stats{grid-template-columns:1fr}.top{flex-direction:column}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <a class="brand" href="index.html"><span class="logo">BT</span><span>BADS TrustOS<small>AI Administrator</small></span></a>
+    <div style="height:28px"></div>
+    <a class="btn btn-primary" href="index.html" style="width:100%;margin-bottom:10px">← Головна</a>
+    <a class="btn btn-ghost" href="dashboard.html" style="width:100%;margin-bottom:10px">Command View</a>
+    <button class="btn btn-ghost" id="resetDemo" style="width:100%">Скинути демо</button>
+    <p style="color:#9db1c4;margin-top:20px">Безпечне статичне демо на синтетичних даних. Воно не надсилає листи, не витрачає кошти й не змінює зовнішні системи.</p>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div>
+        <span class="badge">Commercial Pilot Demo</span>
+        <h1 class="h1" style="font-size:clamp(34px,4vw,58px);margin:14px 0 8px">AI-адміністратор, якому можна довіряти.</h1>
+        <p style="color:#9db1c4;max-width:780px">Заявка перетворюється на кваліфікований lead, чернетку пропозиції, план виконання та перевірюваний evidence package. Відправлення клієнту можливе лише після погодження людиною.</p>
+      </div>
+      <a class="btn btn-primary" href="mailto:stoliarchuk_valentyn@protonmail.com?subject=BADS%20AI%20Administrator%20Pilot">Обговорити пілот</a>
+    </div>
+
+    <section class="stats">
+      <div class="stat"><b id="leadScore">—</b><span>Lead score</span></div>
+      <div class="stat"><b id="riskScore">—</b><span>Risk level</span></div>
+      <div class="stat"><b id="evidenceId">—</b><span>Evidence ID</span></div>
+      <div class="stat"><b id="approvalState">Required</b><span>Human approval</span></div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>1. Вхідна заявка</h2>
+        <div class="field"><label>Демо-сценарій</label><select id="scenario">
+          <option value="automation">Автоматизація заявок і документів</option>
+          <option value="analytics">Аналітичний звіт для керівника</option>
+          <option value="support">AI-помічник служби підтримки</option>
+        </select></div>
+        <div class="field"><label>Компанія</label><input id="company" value="Demo Logistics Ukraine"></div>
+        <div class="field"><label>Контакт</label><input id="contact" value="operations@example.com"></div>
+        <div class="field"><label>Запит клієнта</label><textarea id="request">Ми отримуємо близько 80 заявок на день через пошту і сайт. Потрібно автоматично класифікувати їх, готувати чернетки відповідей, створювати завдання для менеджерів і формувати щоденний звіт директору.</textarea></div>
+        <div class="actions">
+          <button class="btn btn-primary" id="runDemo">Запустити агентів</button>
+          <button class="btn btn-ghost" id="loadSample">Інший приклад</button>
+        </div>
+        <div class="notice" style="margin-top:14px">У реальному MVP зовнішні дії — лист, договір, платіж, видалення даних або deployment — блокуються до ручного погодження.</div>
+      </div>
+
+      <div class="panel">
+        <h2>2. Агентний workflow</h2>
+        <div class="pipeline" id="pipeline">
+          <div class="step" data-step="1" data-state="idle"><span class="num">1</span><div><b>Intake Agent</b><small>Витягує факти та структурує запит</small></div><span class="status">Очікує</span></div>
+          <div class="step" data-step="2" data-state="idle"><span class="num">2</span><div><b>Qualification Agent</b><small>Оцінює fit, терміновість і ризики</small></div><span class="status">Очікує</span></div>
+          <div class="step" data-step="3" data-state="idle"><span class="num">3</span><div><b>Proposal Agent</b><small>Готує scope, ціну та наступний крок</small></div><span class="status">Очікує</span></div>
+          <div class="step" data-step="4" data-state="idle"><span class="num">4</span><div><b>Project Agent</b><small>Створює backlog і критерії приймання</small></div><span class="status">Очікує</span></div>
+          <div class="step" data-step="5" data-state="idle"><span class="num">5</span><div><b>Evidence Agent</b><small>Фіксує джерела, версію політики та рішення</small></div><span class="status">Очікує</span></div>
+          <div class="step" data-step="6" data-state="idle"><span class="num">6</span><div><b>Human Approval</b><small>Лише керівник дозволяє зовнішню дію</small></div><span class="status">Очікує</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid" style="margin-top:18px">
+      <div class="panel">
+        <h2>3. Чернетка результату</h2>
+        <div class="output" id="output">Запустіть демо, щоб агенти підготували результат.</div>
+        <div class="actions hidden" id="approvalActions" style="margin-top:14px">
+          <button class="btn btn-primary" id="approve">Погодити чернетку</button>
+          <button class="btn btn-ghost" id="reject">Повернути на доопрацювання</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>4. Evidence trail</h2>
+        <div class="evidence" id="evidenceLog"><div class="evidence-row">Evidence Agent ще не запускався.<small>Журнал буде створено після обробки заявки.</small></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="assets/js/ai-admin.js"></script>
+</body>
+</html>
