@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -38,18 +38,28 @@ class WorkflowRun(Base):
     model_name: Mapped[str] = mapped_column(String(100), default="deterministic-fallback")
     estimated_cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
 
-    approval: Mapped["Approval"] = relationship(back_populates="run", uselist=False, cascade="all, delete-orphan")
-    agent_runs: Mapped[list["AgentRun"]] = relationship(back_populates="run", cascade="all, delete-orphan")
-    audit_events: Mapped[list["AuditEvent"]] = relationship(back_populates="run", cascade="all, delete-orphan")
+    approval: Mapped["Approval"] = relationship(
+        back_populates="run", uselist=False, cascade="all, delete-orphan"
+    )
+    agent_runs: Mapped[list["AgentRun"]] = relationship(
+        back_populates="run", cascade="all, delete-orphan"
+    )
+    audit_events: Mapped[list["AuditEvent"]] = relationship(
+        back_populates="run", cascade="all, delete-orphan"
+    )
 
 
 class AgentRun(Base):
     __tablename__ = "agent_runs"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    workflow_run_id: Mapped[str] = mapped_column(ForeignKey("workflow_runs.id", ondelete="CASCADE"), index=True)
+    workflow_run_id: Mapped[str] = mapped_column(
+        ForeignKey("workflow_runs.id", ondelete="CASCADE"), index=True
+    )
     agent_name: Mapped[str] = mapped_column(String(80))
     agent_version: Mapped[str] = mapped_column(String(20), default="0.2.0")
     status: Mapped[str] = mapped_column(String(20), default="completed")
@@ -68,7 +78,9 @@ class Approval(Base):
     __tablename__ = "approvals"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    workflow_run_id: Mapped[str] = mapped_column(ForeignKey("workflow_runs.id", ondelete="CASCADE"), unique=True)
+    workflow_run_id: Mapped[str] = mapped_column(
+        ForeignKey("workflow_runs.id", ondelete="CASCADE"), unique=True
+    )
     required: Mapped[bool] = mapped_column(Boolean, default=True)
     status: Mapped[str] = mapped_column(String(20), default="pending")
     proposed_action: Mapped[str] = mapped_column(String(50), default="draft_email")
@@ -85,7 +97,9 @@ class AuditEvent(Base):
     __tablename__ = "audit_events"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    workflow_run_id: Mapped[str] = mapped_column(ForeignKey("workflow_runs.id", ondelete="CASCADE"), index=True)
+    workflow_run_id: Mapped[str] = mapped_column(
+        ForeignKey("workflow_runs.id", ondelete="CASCADE"), index=True
+    )
     event_type: Mapped[str] = mapped_column(String(60), index=True)
     actor: Mapped[str] = mapped_column(String(120), default="system")
     details: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
