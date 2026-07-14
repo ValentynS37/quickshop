@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
@@ -22,6 +22,7 @@ class AgentResult:
     model_provider: str
     model_name: str
     estimated_cost_usd: float = 0.0
+    stage_summaries: list[dict[str, object]] = field(default_factory=list)
 
 
 class AgentEngine:
@@ -29,16 +30,58 @@ class AgentEngine:
         self.settings = settings
 
     def process(self, *, company: str, request_text: str, data_classification: str) -> AgentResult:
-        if self.settings.openai_api_key:
-            try:
-                return self._process_openai(company, request_text, data_classification)
-            except (httpx.HTTPError, KeyError, ValueError, json.JSONDecodeError):
-                fallback = self._process_local(company, request_text, data_classification)
-                fallback.flags.append("openai_fallback_used")
-                return fallback
-        return self._process_local(company, request_text, data_classification)
+        mode = self.settings.agent_orchestration
+        if mode == "local" or not self.settings.openai_api_key:
+            return self._process_local(company, request_text, data_classification)
 
-    def _process_openai(self, company: str, request_text: str, data_classification: str) -> AgentResult:
+        if mode == "sdk":
+            try:
+                return self._process_agents_sdk(company, request_text, data_classification)
+            except Exception:  # noqa: BLE001 - safe fallback is intentional at provider boundary
+                try:
+                    fallback = self._process_responses(company, request_text, data_classification)
+                    fallback.flags.append("agents_sdk_fallback_to_responses")
+                    return fallback
+                except (httpx.HTTPError, KeyError, ValueError, json.JSONDecodeError):
+                    fallback = self._process_local(company, request_text, data_classification)
+                    fallback.flags.append("openai_fallback_used")
+                    return fallback
+
+        try:
+            return self._process_responses(company, request_text, data_classification)
+        except (httpx.HTTPError, KeyError, ValueError, json.JSONDecodeError):
+            fallback = self._process_local(company, request_text, data_classification)
+            fallback.flags.append("openai_fallback_used")
+            return fallback
+
+    def _process_agents_sdk(
+        self,
+        company: str,
+        request_text: str,
+        data_classification: str,
+    ) -> AgentResult:
+        from .sdk_agents import AgentsWorkflow
+
+        output = AgentsWorkflow(self.settings).run(
+            company=company,
+            request_text=request_text,
+            data_classification=data_classification,
+        )
+        return AgentResult(
+            lead_score=output.lead_score,
+            risk_level=output.risk_level,
+            confidence=output.confidence,
+            summary=output.summary,
+            proposal=output.proposal,
+            backlog=output.backlog,
+            flags=output.flags,
+            model_provider="openai-agents-sdk",
+            model_name=self.settings.openai_model,
+            estimated_cost_usd=output.estimated_cost_usd,
+            stage_summaries=output.stage_summaries,
+        )
+
+    def _process_responses(self, company: str, request_text: str, data_classification: str) -> AgentResult:
         schema = {
             "type": "object",
             "additionalProperties": False,
@@ -63,7 +106,15 @@ class AgentEngine:
                 },
                 "flags": {"type": "array", "items": {"type": "string"}},
             },
-            "required": ["lead_score", "risk_level", "confidence", "summary", "proposal", "backlog", "flags"],
+            "required": [
+                "lead_score",
+                "risk_level",
+                "confidence",
+                "summary",
+                "proposal",
+                "backlog",
+                "flags",
+            ],
         }
         payload = {
             "model": self.settings.openai_model,
@@ -110,7 +161,7 @@ class AgentEngine:
             proposal=str(data["proposal"]),
             backlog=list(data["backlog"]),
             flags=list(data["flags"]),
-            model_provider="openai",
+            model_provider="openai-responses",
             model_name=str(body.get("model") or self.settings.openai_model),
             estimated_cost_usd=self._rough_cost(usage),
         )
